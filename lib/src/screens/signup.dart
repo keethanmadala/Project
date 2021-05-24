@@ -17,6 +17,14 @@ class SignUpPage extends StatefulWidget {
 class _SignUpPageState extends State<SignUpPage> {
   String email, password, passwordRetype;
   final auth = FirebaseAuth.instance;
+  FToast fToast;
+
+  @override
+  void initState() {
+    super.initState();
+    fToast = FToast();
+    fToast.init(context);
+  }
 
   bool validatePasswordStructure(String value) {
     String pattern =
@@ -106,6 +114,44 @@ class _SignUpPageState extends State<SignUpPage> {
     );
   }
 
+  _showPasswordNotMatched() {
+    Widget toast = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(25.0),
+        color: Colors.redAccent,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.clear),
+          SizedBox(
+            width: 12.0,
+          ),
+          Text("Passwords are not matched."),
+        ],
+      ),
+    );
+
+    fToast.showToast(
+      child: toast,
+      gravity: ToastGravity.BOTTOM,
+      toastDuration: Duration(seconds: 2),
+    );
+
+    // Custom Toast Position
+    // fToast.showToast(
+    //     child: toast,
+    //     toastDuration: Duration(seconds: 2),
+    //     positionedToastBuilder: (context, child) {
+    //       return Positioned(
+    //         child: child,
+    //         top: 16.0,
+    //         left: 16.0,
+    //       );
+    //     });
+  }
+
   Widget _buildSignUpButton() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -131,14 +177,7 @@ class _SignUpPageState extends State<SignUpPage> {
                             ),
                           ),
                         )
-                    : Fluttertoast.showToast(
-                        msg: "Passwords are not matched",
-                        toastLength: Toast.LENGTH_SHORT,
-                        gravity: ToastGravity.BOTTOM,
-                        timeInSecForIosWeb: 1,
-                        backgroundColor: Colors.red,
-                        textColor: Colors.black,
-                        fontSize: 16.0);
+                    : _showPasswordNotMatched();
               } catch (err) {
                 print(err);
               }
