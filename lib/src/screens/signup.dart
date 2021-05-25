@@ -18,6 +18,7 @@ class _SignUpPageState extends State<SignUpPage> {
   String email, password, passwordRetype;
   final auth = FirebaseAuth.instance;
   FToast fToast;
+  String error;
 
   @override
   void initState() {
@@ -152,6 +153,50 @@ class _SignUpPageState extends State<SignUpPage> {
     //     });
   }
 
+  _showError(String err) {
+    Widget toast = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 30.0, vertical: 15.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(25.0),
+        color: Colors.redAccent,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(
+            Icons.error_outline_outlined,
+            size: 30,
+          ),
+          SizedBox(
+            width: 12.0,
+          ),
+          Text(
+            err,
+            style: TextStyle(color: Colors.white),
+          ),
+        ],
+      ),
+    );
+
+    fToast.showToast(
+      child: toast,
+      gravity: ToastGravity.BOTTOM,
+      toastDuration: Duration(seconds: 3),
+    );
+
+    // Custom Toast Position
+    // fToast.showToast(
+    //     child: toast,
+    //     toastDuration: Duration(seconds: 2),
+    //     positionedToastBuilder: (context, child) {
+    //       return Positioned(
+    //         child: child,
+    //         top: 16.0,
+    //         left: 16.0,
+    //       );
+    //     });
+  }
+
   Widget _buildSignUpButton() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -162,25 +207,27 @@ class _SignUpPageState extends State<SignUpPage> {
           margin: EdgeInsets.only(bottom: 20),
           child: ElevatedButton(
             onPressed: () {
-              try {
-                (password == passwordRetype)
-                    ? auth
-                        .createUserWithEmailAndPassword(
-                          email: email,
-                          password: password,
-                        )
-                        .then(
-                          (_) => Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => VerifyScreen(),
-                            ),
+              (password == passwordRetype)
+                  ? auth
+                      .createUserWithEmailAndPassword(
+                        email: email,
+                        password: password,
+                      )
+                      .then(
+                        (_) => Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => VerifyScreen(),
                           ),
-                        )
-                    : _showPasswordNotMatched();
-              } catch (err) {
-                print(err);
-              }
+                        ),
+                      )
+                      .catchError((e) {
+                      print(e);
+                      (password.length < 6)
+                          ? _showError('Password length is lessthan 6')
+                          : _showError('Email is already in use.');
+                    })
+                  : _showPasswordNotMatched();
             },
             child: Text(
               "Sign Up",

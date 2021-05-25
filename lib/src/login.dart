@@ -4,6 +4,7 @@ import 'package:Project/src/screens/reset.dart';
 import 'package:Project/src/screens/signup.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:Project/constants.dart';
 
@@ -18,20 +19,180 @@ class _LoginPageState extends State<LoginPage> {
   final authBloc = AuthBloc();
   String email, password;
   final auth = FirebaseAuth.instance;
+  FToast fToast;
 
   @override
   initState() {
-    authBloc.currentUser.listen((fbUser) {
-      if (fbUser != null) {
-        Navigator.of(context).pushReplacement(
-            MaterialPageRoute(builder: (context) => DecisionScreen()));
-      }
-    });
+    fToast = FToast();
+    fToast.init(context);
     // if (auth.currentUser != null) {
     //   Navigator.of(context).pushReplacement(
     //       MaterialPageRoute(builder: (context) => DecisionScreen()));
     // }
     super.initState();
+  }
+
+  check() {
+    authBloc.currentUser.listen((fbUser) {
+      if (fbUser != null) {
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => DecisionScreen()));
+        // _showSuccess('Login successful');
+        _showWelcome('Welcome ${fbUser.displayName}');
+      }
+    });
+  }
+
+  _showError(String err) {
+    Widget toast = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(25.0),
+        color: Colors.redAccent,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.error_outline_outlined),
+          SizedBox(
+            width: 12.0,
+          ),
+          Text(err),
+        ],
+      ),
+    );
+
+    fToast.showToast(
+      child: toast,
+      gravity: ToastGravity.BOTTOM,
+      toastDuration: Duration(seconds: 2),
+    );
+
+    // Custom Toast Position
+    // fToast.showToast(
+    //     child: toast,
+    //     toastDuration: Duration(seconds: 2),
+    //     positionedToastBuilder: (context, child) {
+    //       return Positioned(
+    //         child: child,
+    //         top: 16.0,
+    //         left: 16.0,
+    //       );
+    //     });
+  }
+
+  _showSuccess(String message) {
+    Widget toast = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(25.0),
+        color: Colors.greenAccent,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.check),
+          SizedBox(
+            width: 12.0,
+          ),
+          Text(message),
+        ],
+      ),
+    );
+
+    fToast.showToast(
+      child: toast,
+      gravity: ToastGravity.BOTTOM,
+      toastDuration: Duration(seconds: 2),
+    );
+
+    // Custom Toast Position
+    // fToast.showToast(
+    //     child: toast,
+    //     toastDuration: Duration(seconds: 2),
+    //     positionedToastBuilder: (context, child) {
+    //       return Positioned(
+    //         child: child,
+    //         top: 16.0,
+    //         left: 16.0,
+    //       );
+    //     });
+  }
+
+  _showWelcome(String message) {
+    Widget toast = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(25.0),
+        color: Colors.greenAccent,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(FontAwesomeIcons.prayingHands),
+          SizedBox(
+            width: 12.0,
+          ),
+          Text(message),
+        ],
+      ),
+    );
+
+    fToast.showToast(
+      child: toast,
+      gravity: ToastGravity.TOP,
+      toastDuration: Duration(seconds: 2),
+    );
+
+    // Custom Toast Position
+    // fToast.showToast(
+    //     child: toast,
+    //     toastDuration: Duration(seconds: 2),
+    //     positionedToastBuilder: (context, child) {
+    //       return Positioned(
+    //         child: child,
+    //         top: 16.0,
+    //         left: 16.0,
+    //       );
+    //     });
+  }
+
+  _showMessage(String message) {
+    Widget toast = Container(
+      padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(25.0),
+        color: Colors.grey,
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.access_time_rounded),
+          SizedBox(
+            width: 12.0,
+          ),
+          Text(message),
+        ],
+      ),
+    );
+
+    fToast.showToast(
+      child: toast,
+      gravity: ToastGravity.BOTTOM,
+      toastDuration: Duration(seconds: 2),
+    );
+
+    // Custom Toast Position
+    // fToast.showToast(
+    //     child: toast,
+    //     toastDuration: Duration(seconds: 2),
+    //     positionedToastBuilder: (context, child) {
+    //       return Positioned(
+    //         child: child,
+    //         top: 16.0,
+    //         left: 16.0,
+    //       );
+    //     });
   }
 
   Widget _buildLogo() {
@@ -118,21 +279,22 @@ class _LoginPageState extends State<LoginPage> {
           margin: EdgeInsets.only(bottom: 20),
           child: ElevatedButton(
             onPressed: () {
-              try {
-                auth
-                    .signInWithEmailAndPassword(
-                        email: email, password: password)
-                    .then(
-                      (_) => Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => DecisionScreen(),
-                        ),
-                      ),
-                    );
-              } catch (err) {
+              auth
+                  .signInWithEmailAndPassword(email: email, password: password)
+                  .then(
+                (_) {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => DecisionScreen(),
+                    ),
+                  );
+                  _showSuccess('Login Successful');
+                },
+              ).catchError((err) {
                 print(err);
-              }
+                _showError("Enter valid email and password.");
+              });
             },
             child: Text(
               "Login",
@@ -210,6 +372,8 @@ class _LoginPageState extends State<LoginPage> {
         GestureDetector(
           onTap: () {
             authBloc.loginGoogle();
+            _showMessage('Logging in...');
+            check();
           },
           child: Container(
             height: 60,

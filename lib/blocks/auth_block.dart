@@ -21,8 +21,10 @@ class AuthBloc {
       final result = await authService.signInWithCredential(credential);
       print(result.user.displayName);
       username = result.user.displayName;
+      return true;
     } catch (error) {
       print(error);
+      return false;
     }
   }
 
