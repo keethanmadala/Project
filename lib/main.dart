@@ -28,7 +28,11 @@ class MyApp extends StatelessWidget {
           primarySwatch: Colors.blue,
           visualDensity: VisualDensity.adaptivePlatformDensity,
         ),
-        home: (auth.currentUser != null) ? DecisionScreen() : LoginPage(),
+        home: (auth.currentUser != null)
+            ? (auth.currentUser.emailVerified)
+                ? DecisionScreen()
+                : LoginPage()
+            : LoginPage(),
       ),
     );
   }

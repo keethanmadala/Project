@@ -1,5 +1,4 @@
 import 'dart:async';
-
 import 'package:Project/blocks/application_bloc.dart';
 import 'package:Project/src/screens/home_screen.dart';
 import 'package:Project/widget/navigationwidget.dart';

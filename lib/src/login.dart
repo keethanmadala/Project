@@ -2,6 +2,7 @@ import 'package:Project/blocks/auth_block.dart';
 import 'package:Project/src/screens/decision_screen.dart';
 import 'package:Project/src/screens/reset.dart';
 import 'package:Project/src/screens/signup.dart';
+import 'package:Project/src/screens/verify.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -267,22 +268,26 @@ class _LoginPageState extends State<LoginPage> {
           margin: EdgeInsets.only(bottom: 20),
           child: ElevatedButton(
             onPressed: () {
-              auth
-                  .signInWithEmailAndPassword(email: email, password: password)
-                  .then(
-                (_) {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => DecisionScreen(),
-                    ),
-                  );
-                  _showSuccess('Login Successful');
-                },
-              ).catchError((err) {
-                print(err);
-                _showError("Enter valid email and password.");
-              });
+              (auth.currentUser.emailVerified)
+                  ? auth
+                      .signInWithEmailAndPassword(
+                          email: email, password: password)
+                      .then(
+                      (_) {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => DecisionScreen(),
+                          ),
+                        );
+                        _showSuccess('Login Successful');
+                      },
+                    ).catchError((err) {
+                      print(err);
+                      _showError("Enter valid email and password.");
+                    })
+                  : Navigator.push(context,
+                      MaterialPageRoute(builder: (context) => VerifyScreen()));
             },
             child: Text(
               "Login",
@@ -455,5 +460,11 @@ class _LoginPageState extends State<LoginPage> {
         ],
       ),
     ));
+  }
+
+  @override
+  void dispose() {
+    // TODO: implement dispose
+    super.dispose();
   }
 }
