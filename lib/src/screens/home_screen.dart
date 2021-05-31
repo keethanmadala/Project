@@ -5,8 +5,8 @@ import 'package:Project/models/nearbysearch.dart';
 import 'package:Project/models/place.dart';
 import 'package:Project/services/geolocator_service.dart';
 import 'package:Project/services/marker_service.dart';
-import 'package:Project/src/login.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'dart:math' show cos, sqrt, asin;
+import 'package:Project/widget/navigationwidget.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_rating_bar/flutter_rating_bar.dart';
@@ -59,29 +59,9 @@ class _HomeScreenState extends State<HomeScreen> {
     final markerService = MarkerService();
     var markers = <Marker>[];
     final applicationBloc = Provider.of<ApplicationBloc>(context);
-    final auth = FirebaseAuth.instance;
     return Scaffold(
-      appBar: AppBar(
-        actions: <Widget>[
-          Text((authBloc.username != '')
-              ? authBloc.username
-              : auth.currentUser.email),
-          Padding(
-            padding: const EdgeInsets.only(right: 10.0),
-            child: TextButton(
-              onPressed: () {
-                applicationBloc.logout();
-                Navigator.of(context).pushReplacement(
-                    MaterialPageRoute(builder: (context) => LoginPage()));
-              },
-              child: Text(
-                'Logout',
-                style: TextStyle(color: Colors.white, fontSize: 20),
-              ),
-            ),
-          )
-        ],
-      ),
+      appBar: AppBar(),
+      drawer: NavigationDrawerWidget(),
       body: (applicationBloc.currentLocation == null)
           ? Center(
               child: CircularProgressIndicator(),
@@ -247,6 +227,11 @@ class _HomeScreenState extends State<HomeScreen> {
                                                 ],
                                               )
                                             : Text("No Rating"),
+                                        Text(
+                                          'Distance : ${calculateDistance(applicationBloc.currentLocation.latitude, applicationBloc.currentLocation.longitude, applicationBloc.nearbySearchResults[index].geometry.location.lat, applicationBloc.nearbySearchResults[index].geometry.location.lng)} km(s)',
+                                          style: TextStyle(
+                                              fontWeight: FontWeight.bold),
+                                        )
                                       ],
                                     ),
                                     trailing: IconButton(
@@ -287,23 +272,32 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  notify(BuildContext context, int index) {
-    final applicationBloc = Provider.of<ApplicationBloc>(context);
-    applicationBloc.distanceBetweenPlaces(
-        applicationBloc.nearbySearchResults[index].geometry.location.lat,
-        applicationBloc.nearbySearchResults[index].geometry.location.lng);
-    AlertDialog alert = AlertDialog(
-      title: Text("Distance"),
-      content: Text("The distance is ${applicationBloc.meters}"),
-      actions: [ListTile()],
-    );
-    showDialog(
-      context: context,
-      builder: (context) {
-        return alert;
-      },
-    );
+  double calculateDistance(lat1, lon1, lat2, lon2) {
+    var p = 0.017453292519943295;
+    var c = cos;
+    var a = 0.5 -
+        c((lat2 - lat1) * p) / 2 +
+        c(lat1 * p) * c(lat2 * p) * (1 - c((lon2 - lon1) * p)) / 2;
+    return double.parse((12742 * asin(sqrt(a))).toStringAsFixed(2));
   }
+
+  // notify(BuildContext context, int index) {
+  //   final applicationBloc = Provider.of<ApplicationBloc>(context);
+  //   applicationBloc.distanceBetweenPlaces(
+  //       applicationBloc.nearbySearchResults[index].geometry.location.lat,
+  //       applicationBloc.nearbySearchResults[index].geometry.location.lng);
+  //   AlertDialog alert = AlertDialog(
+  //     title: Text("Distance"),
+  //     content: Text("The distance is ${applicationBloc.meters}"),
+  //     actions: [ListTile()],
+  //   );
+  //   showDialog(
+  //     context: context,
+  //     builder: (context) {
+  //       return alert;
+  //     },
+  //   );
+  // }
 
   Future<void> _goToPlace(Place place) async {
     final GoogleMapController controller = await _mapController.future;

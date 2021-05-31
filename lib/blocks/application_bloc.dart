@@ -4,9 +4,11 @@ import 'package:Project/models/location.dart';
 import 'package:Project/models/nearbysearch.dart';
 import 'package:Project/models/place.dart';
 import 'package:Project/models/place_search.dart';
+import 'package:Project/services/geohash.dart';
 import 'package:Project/services/geolocator_service.dart';
 import 'package:Project/services/marker_service.dart';
 import 'package:Project/services/places_service.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/cupertino.dart';
@@ -17,12 +19,14 @@ class ApplicationBloc with ChangeNotifier {
   final placesService = PlacesService();
   final markerService = MarkerService();
   final auth = FirebaseAuth.instance;
+  final geohashService = GeoHashService();
   User user;
 
   //Variables
   Position currentLocation;
   double meters;
   List<PlaceSearch> searchResults;
+  List<DocumentSnapshot> donations;
   List<NearBySearch> nearbySearchResults;
   StreamController<Place> selectedLocation =
       StreamController<Place>.broadcast();
@@ -77,23 +81,6 @@ class ApplicationBloc with ChangeNotifier {
     meters = await geoLocatorService.getDistance(
         currentLocation.latitude, currentLocation.longitude, lat, lng);
     return meters;
-  }
-
-  togglePlaceType(String value, bool selected) async {
-    if (selected) {
-      placeType = value;
-    } else {
-      placeType = null;
-    }
-
-    if (placeType != null) {
-      var places = await placesService.getPlaces(
-          selectedLocationStatic.geometry.location.lat,
-          selectedLocationStatic.geometry.location.lng,
-          placeType);
-      // markers = [];
-    }
-    notifyListeners();
   }
 
   @override
