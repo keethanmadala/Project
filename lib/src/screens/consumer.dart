@@ -53,7 +53,9 @@ class _ConsumerPageState extends State<ConsumerPage> {
         .where("geohash", isLessThanOrEqualTo: range[1])
         .snapshots()
         .listen((data) {
-      donations = data.docs;
+      setState(() {
+        donations = data.docs;
+      });
     });
     await Future.delayed(Duration(seconds: 1));
     setState(() {});
@@ -67,6 +69,7 @@ class _ConsumerPageState extends State<ConsumerPage> {
     super.dispose();
   }
 
+  //Haversine Formula
   double calculateDistance(lat1, lon1, lat2, lon2) {
     var p = 0.017453292519943295;
     var c = cos;

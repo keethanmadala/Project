@@ -33,22 +33,26 @@ class _FoodDetailsState extends State<FoodDetails> {
   int quantity, hours;
   bool postCreated = false;
   FToast fToast;
+  GeoFirePoint point;
+  var doc;
 
   @override
   initState() {
     fToast = FToast();
     fToast.init(context);
-    FirebaseFirestore.instance
+    getPostState();
+    super.initState();
+  }
+
+  getPostState() async {
+    doc = await FirebaseFirestore.instance
         .collection('Food_details')
         .doc(auth.currentUser.email)
-        .get()
-        .then((value) {
-      setState(() {
-        postCreated = true;
-      });
+        .get();
+    setState(() {
+      postCreated = doc.exists;
     });
-
-    super.initState();
+    print(doc.get('name'));
   }
 
   @override
@@ -190,22 +194,103 @@ class _FoodDetailsState extends State<FoodDetails> {
     return Scaffold(
       appBar: AppBar(),
       drawer: NavigationDrawerWidget(),
+      backgroundColor: Colors.white,
       body: SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.only(top: 50),
+          padding: EdgeInsets.only(top: 30),
           child: (postCreated)
               ? Container(
-                  child: ElevatedButton(
-                    child: Text("Delete Post"),
-                    onPressed: () {
-                      setState(() {
-                        FirebaseFirestore.instance
-                            .collection('Food_details')
-                            .doc(auth.currentUser.email)
-                            .delete();
-                        postCreated = false;
-                      });
-                    },
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Text(
+                          'Your present donation post ',
+                          style: TextStyle(
+                              fontSize: 20, fontWeight: FontWeight.w500),
+                        ),
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.all(10.0),
+                        child: Card(
+                          borderOnForeground: true,
+                          shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10)),
+                          child: Padding(
+                            padding: const EdgeInsets.all(10.0),
+                            child: ListTile(
+                              tileColor: Colors.grey[200],
+                              title: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Text(
+                                      'Name : ${doc.get('name')}',
+                                      style: TextStyle(fontSize: 18),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Text(
+                                      'Quantity : ${doc.get('quantity')}',
+                                      style: TextStyle(fontSize: 18),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Text(
+                                      'Address : ${doc.get('address')}',
+                                      style: TextStyle(fontSize: 18),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Text(
+                                      'Expiry date : ${datetime(doc.get('expiry'))[0]}',
+                                      style: TextStyle(fontSize: 18),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Text(
+                                      'Expiry time : ${datetime(doc.get('expiry'))[1].substring(0, 8)}',
+                                      style: TextStyle(fontSize: 18),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      ElevatedButton(
+                        child: Text("Delete Post"),
+                        onPressed: () {
+                          setState(() {
+                            FirebaseFirestore.instance
+                                .collection('Food_details')
+                                .doc(auth.currentUser.email)
+                                .delete();
+                            setState(() {
+                              postCreated = false;
+                            });
+                          });
+                        },
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.only(top: 30.0),
+                        child: Container(
+                          color: Colors.white,
+                          child: Image(
+                            image: AssetImage('assets/food_drive.jpeg'),
+                          ),
+                        ),
+                      )
+                    ],
                   ),
                 )
               : Column(
@@ -299,45 +384,56 @@ class _FoodDetailsState extends State<FoodDetails> {
                         margin: EdgeInsets.only(bottom: 20),
                         child: ElevatedButton(
                           onPressed: () async {
-                            GeoFirePoint point = geo.point(
-                                latitude:
-                                    applicationBloc.currentLocation.latitude,
-                                longitude:
-                                    applicationBloc.currentLocation.longitude);
-                            await FirebaseFirestore.instance
-                                .collection('Food_details')
-                                .doc(auth.currentUser.email)
-                                .set({
-                              'email': auth.currentUser.email,
-                              'name': foodName,
-                              'quantity': quantity,
-                              'expiry':
-                                  DateTime.now().add(Duration(hours: hours)),
-                              'location': point.geoPoint,
-                              'geohash': point.hash,
-                              'address': address,
-                            }).then((value) {
-                              _showSuccess('Donation Posted');
-                              setState(() {
-                                postCreated = true;
+                            if (address != null &&
+                                foodName != null &&
+                                quantity != null &&
+                                hours != null) {
+                              point = geo.point(
+                                  latitude:
+                                      applicationBloc.currentLocation.latitude,
+                                  longitude: applicationBloc
+                                      .currentLocation.longitude);
+                              await FirebaseFirestore.instance
+                                  .collection('Food_details')
+                                  .doc(auth.currentUser.email)
+                                  .set({
+                                'email': auth.currentUser.email,
+                                'name': foodName,
+                                'quantity': quantity,
+                                'expiry':
+                                    DateTime.now().add(Duration(hours: hours)),
+                                'location': point.geoPoint,
+                                'geohash': point.hash,
+                                'address': address,
+                              }).then((value) {
+                                _showSuccess('Donation Posted');
+                                setState(() {
+                                  postCreated = true;
+                                });
+                              }).catchError((e) {
+                                print(e);
+                                _showError(e.toString());
                               });
-                            }).catchError((e) {
-                              print(e);
-                              _showError(e.toString());
-                            });
-                            await FirebaseFirestore.instance
-                                .collection('user')
-                                .doc(auth.currentUser.email)
-                                .collection('donations')
-                                .doc()
-                                .set({
-                              'name': foodName,
-                              'quantity': quantity,
-                              'expiry': DateTime.now(),
-                              'address': address,
-                            }).catchError((e) {
-                              print(e);
-                            });
+                              await FirebaseFirestore.instance
+                                  .collection('user')
+                                  .doc(auth.currentUser.email)
+                                  .collection('donations')
+                                  .doc()
+                                  .set({
+                                'name': foodName,
+                                'quantity': quantity,
+                                'expiry': DateTime.now(),
+                                'address': address,
+                              }).catchError((e) {
+                                print(e);
+                              });
+                              foodName = null;
+                              quantity = null;
+                              address = null;
+                              hours = null;
+                            } else {
+                              _showError('Please fill all fields');
+                            }
                           },
                           child: Text(
                             "Create Post",
@@ -392,5 +488,10 @@ class _FoodDetailsState extends State<FoodDetails> {
         ),
       ),
     );
+  }
+
+  List<String> datetime(Timestamp timestamp) {
+    List<String> date = timestamp.toDate().toString().split(' ');
+    return date;
   }
 }
