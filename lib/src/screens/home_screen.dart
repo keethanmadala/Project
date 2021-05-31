@@ -281,24 +281,6 @@ class _HomeScreenState extends State<HomeScreen> {
     return double.parse((12742 * asin(sqrt(a))).toStringAsFixed(2));
   }
 
-  // notify(BuildContext context, int index) {
-  //   final applicationBloc = Provider.of<ApplicationBloc>(context);
-  //   applicationBloc.distanceBetweenPlaces(
-  //       applicationBloc.nearbySearchResults[index].geometry.location.lat,
-  //       applicationBloc.nearbySearchResults[index].geometry.location.lng);
-  //   AlertDialog alert = AlertDialog(
-  //     title: Text("Distance"),
-  //     content: Text("The distance is ${applicationBloc.meters}"),
-  //     actions: [ListTile()],
-  //   );
-  //   showDialog(
-  //     context: context,
-  //     builder: (context) {
-  //       return alert;
-  //     },
-  //   );
-  // }
-
   Future<void> _goToPlace(Place place) async {
     final GoogleMapController controller = await _mapController.future;
     controller.animateCamera(CameraUpdate.newCameraPosition(CameraPosition(

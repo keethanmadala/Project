@@ -1,6 +1,7 @@
 import 'package:Project/blocks/application_bloc.dart';
 import 'package:Project/blocks/auth_block.dart';
 import 'package:Project/src/login.dart';
+import 'package:Project/src/screens/decision_screen.dart';
 import 'package:Project/src/screens/donation.dart';
 import 'package:Project/src/screens/profile.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -78,8 +79,8 @@ class _NavigationDrawerWidgetState extends State<NavigationDrawerWidget> {
               height: 20,
             ),
             buildMenuItem(
-                text: 'Profile',
-                icon: Icons.people,
+                text: 'Home',
+                icon: Icons.home,
                 onClicked: () => selectedItem(context, 0)),
             Divider(
               color: Colors.white70,
@@ -185,8 +186,8 @@ class _NavigationDrawerWidgetState extends State<NavigationDrawerWidget> {
     Navigator.of(context).pop();
     switch (index) {
       case 0:
-        Navigator.of(context)
-            .push(MaterialPageRoute(builder: (context) => ProfilePage()));
+        Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => DecisionScreen()));
         break;
       case 1:
         Navigator.of(context)
