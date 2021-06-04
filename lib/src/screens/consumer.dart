@@ -91,6 +91,7 @@ class _ConsumerPageState extends State<ConsumerPage> {
   void getMarkers(GeoPoint point) {
     setState(() {
       markers = Marker(
+        markerId: MarkerId('Donation Place'),
         draggable: false,
         position: LatLng(point.latitude, point.longitude),
       );
