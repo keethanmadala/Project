@@ -155,7 +155,7 @@ class _NavigationDrawerWidgetState extends State<NavigationDrawerWidget> {
                 radius: 15,
                 backgroundColor: Color.fromRGBO(30, 60, 168, 1),
                 child: Icon(
-                  Icons.edit,
+                  Icons.favorite,
                   size: 15,
                   color: Colors.white,
                 ),

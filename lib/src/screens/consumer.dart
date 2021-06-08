@@ -70,7 +70,9 @@ class _ConsumerPageState extends State<ConsumerPage> {
   }
 
   //Haversine Formula
-  double calculateDistance(lat1, lon1, lat2, lon2) {
+  double calculateDistance(lat1, lon1, GeoPoint point) {
+    var lat2 = point.latitude;
+    var lon2 = point.longitude;
     var p = 0.017453292519943295;
     var c = cos;
     var a = 0.5 -
@@ -113,6 +115,11 @@ class _ConsumerPageState extends State<ConsumerPage> {
     }
   }
 
+  List<String> datetime(Timestamp timestamp) {
+    List<String> date = timestamp.toDate().toString().split(' ');
+    return date;
+  }
+
   Widget build(BuildContext context) {
     bool buttonPressed = false;
     final applicationBloc = Provider.of<ApplicationBloc>(context);
@@ -120,69 +127,125 @@ class _ConsumerPageState extends State<ConsumerPage> {
       appBar: AppBar(),
       drawer: NavigationDrawerWidget(),
       body: (applicationBloc.currentLocation != null)
-          ? Column(
-              children: <Widget>[
-                Container(
-                  height: MediaQuery.of(context).size.height * 0.4,
-                  width: MediaQuery.of(context).size.width,
-                  child: (donations != null)
-                      ? ListView.builder(
-                          itemCount: donations == null ? 0 : donations.length,
-                          itemBuilder: (context, index) {
-                            return Card(
-                              shadowColor: Colors.grey,
-                              shape: RoundedRectangleBorder(
-                                  borderRadius: BorderRadius.circular(10)),
-                              child: Padding(
-                                padding: const EdgeInsets.all(8.0),
-                                child: ListTile(
-                                  title: Text(
-                                    donations[index].get('name'),
-                                    style: TextStyle(color: Colors.black),
-                                  ),
-                                  subtitle: Column(),
-                                  trailing: IconButton(
-                                    icon: Icon(
-                                      Icons.directions,
-                                      size: 40,
-                                      color: Theme.of(context).primaryColor,
-                                    ),
-                                    onPressed: () {
-                                      _launchMapsUrl(
-                                          donations[index].get('geohash'));
-                                    },
-                                  ),
-                                  onTap: () {
-                                    _goToNearbyPlace(
-                                        donations[index].get('location'));
-                                  },
-                                ),
-                              ),
-                            );
-                          })
-                      : Container(
-                          child: Center(child: CircularProgressIndicator()),
-                        ),
-                ),
-                Container(
-                  height: MediaQuery.of(context).size.height / 2.5,
-                  child: GoogleMap(
-                    mapType: MapType.normal,
-                    myLocationEnabled: true,
-                    initialCameraPosition: CameraPosition(
-                        target: LatLng(applicationBloc.currentLocation.latitude,
-                            applicationBloc.currentLocation.longitude),
-                        zoom: 16.0),
-                    onMapCreated: (GoogleMapController controller) {
-                      _mapController.complete(controller);
-                      markers:
-                      (markers != null)
-                          ? Set<Marker>.of(markers)
-                          : Set<Marker>();
-                    },
+          ? SingleChildScrollView(
+              child: Column(
+                children: <Widget>[
+                  Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Text(
+                      'Donations Nearby You :',
+                      style:
+                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+                    ),
                   ),
-                ),
-              ],
+                  Padding(
+                    padding: const EdgeInsets.only(bottom: 10.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.blue, width: 5),
+                      ),
+                      height: MediaQuery.of(context).size.height * 0.4,
+                      width: MediaQuery.of(context).size.width,
+                      child: (donations != null)
+                          ? ListView.builder(
+                              itemCount:
+                                  donations == null ? 0 : donations.length,
+                              itemBuilder: (context, index) {
+                                return Card(
+                                  shadowColor: Colors.grey,
+                                  shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(10)),
+                                  child: Padding(
+                                    padding: const EdgeInsets.all(8.0),
+                                    child: ListTile(
+                                      leading: Text(
+                                        '${index + 1} .',
+                                        style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 18),
+                                      ),
+                                      minLeadingWidth: 10,
+                                      title: Column(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.start,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            'Name: ${donations[index].get('name')}',
+                                            style:
+                                                TextStyle(color: Colors.black),
+                                          ),
+                                          Text(
+                                            'Description: ${donations[index].get('description')}',
+                                            style:
+                                                TextStyle(color: Colors.black),
+                                          ),
+                                          Text(
+                                            'Quantity: ${donations[index].get('name')}',
+                                            style:
+                                                TextStyle(color: Colors.black),
+                                          ),
+                                          Text(
+                                            'Distance: ${calculateDistance(applicationBloc.currentLocation.latitude, applicationBloc.currentLocation.longitude, donations[index].get('location'))}',
+                                            style:
+                                                TextStyle(color: Colors.black),
+                                          ),
+                                          Text(
+                                            'Expiry Time: ${datetime(donations[index].get('expiry'))[1].substring(0, 8)}',
+                                            style:
+                                                TextStyle(color: Colors.black),
+                                          ),
+                                        ],
+                                      ),
+                                      trailing: IconButton(
+                                        icon: Icon(
+                                          Icons.directions,
+                                          size: 40,
+                                          color: Theme.of(context).primaryColor,
+                                        ),
+                                        onPressed: () {
+                                          _launchMapsUrl(
+                                              donations[index].get('geohash'));
+                                        },
+                                      ),
+                                      onTap: () {
+                                        _goToNearbyPlace(
+                                            donations[index].get('location'));
+                                      },
+                                    ),
+                                  ),
+                                );
+                              })
+                          : Container(
+                              child: Center(child: CircularProgressIndicator()),
+                            ),
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.only(top: 15.0),
+                    child: Container(
+                      height: MediaQuery.of(context).size.height / 2.5,
+                      child: GoogleMap(
+                        mapType: MapType.normal,
+                        myLocationEnabled: true,
+                        initialCameraPosition: CameraPosition(
+                            target: LatLng(
+                                applicationBloc.currentLocation.latitude,
+                                applicationBloc.currentLocation.longitude),
+                            zoom: 16.0),
+                        onMapCreated: (GoogleMapController controller) {
+                          _mapController.complete(controller);
+                          markers:
+                          (markers != null)
+                              ? Set<Marker>.of(markers)
+                              : Set<Marker>();
+                        },
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             )
           : Container(
               child: Center(

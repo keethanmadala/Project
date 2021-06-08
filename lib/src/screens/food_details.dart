@@ -5,9 +5,12 @@ import 'package:Project/widget/navigationwidget.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:geoflutterfire/geoflutterfire.dart';
+import 'package:workmanager/workmanager.dart';
+import '../../main.dart';
 
 class FoodDetails extends StatefulWidget {
   const FoodDetails({Key key}) : super(key: key);
@@ -28,7 +31,7 @@ class _FoodDetailsState extends State<FoodDetails> {
   final Query collectionReference =
       FirebaseFirestore.instance.collection('user');
   TextEditingController dateCtl = TextEditingController();
-  String foodName, address;
+  String foodName, address, description = ' ';
   int quantity, hours;
   bool postCreated = false;
   FToast fToast;
@@ -56,7 +59,7 @@ class _FoodDetailsState extends State<FoodDetails> {
 
   @override
   void dispose() {
-    subscription.cancel();
+    //subscription.cancel();
     // TODO: implement dispose
     super.dispose();
   }
@@ -235,6 +238,13 @@ class _FoodDetailsState extends State<FoodDetails> {
                                   Padding(
                                     padding: const EdgeInsets.all(5.0),
                                     child: Text(
+                                      'Description :  ${doc.get('description')}',
+                                      style: TextStyle(fontSize: 18),
+                                    ),
+                                  ),
+                                  Padding(
+                                    padding: const EdgeInsets.all(5.0),
+                                    child: Text(
                                       'Quantity : ${doc.get('quantity')}',
                                       style: TextStyle(fontSize: 18),
                                     ),
@@ -266,22 +276,145 @@ class _FoodDetailsState extends State<FoodDetails> {
                           ),
                         ),
                       ),
-                      ElevatedButton(
-                        child: Text("Delete Post"),
-                        onPressed: () {
-                          setState(() {
-                            FirebaseFirestore.instance
-                                .collection('Food_details')
-                                .doc(auth.currentUser.email)
-                                .delete();
-                            setState(() {
-                              postCreated = false;
-                            });
-                          });
-                        },
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.center,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Row(
+                            crossAxisAlignment: CrossAxisAlignment.center,
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.only(right: 15.0),
+                                child: ElevatedButton(
+                                  child: Text("Edit Post"),
+                                  onPressed: () {
+                                    showDialog(
+                                        context: context,
+                                        builder: (BuildContext context) {
+                                          return AlertDialog(
+                                            scrollable: true,
+                                            title: Text('Food Quantity'),
+                                            content: Padding(
+                                              padding:
+                                                  const EdgeInsets.all(8.0),
+                                              child: Form(
+                                                child: Column(
+                                                  children: <Widget>[
+                                                    TextFormField(
+                                                      decoration:
+                                                          InputDecoration(
+                                                        labelText: 'Quantity',
+                                                        icon: Icon(Icons
+                                                            .format_list_numbered_sharp),
+                                                      ),
+                                                      onChanged: (value) {
+                                                        quantity =
+                                                            int.parse(value);
+                                                      },
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                            ),
+                                            actions: [
+                                              ElevatedButton(
+                                                  child: Text("Change"),
+                                                  onPressed: () {
+                                                    FirebaseFirestore.instance
+                                                        .collection(
+                                                            'Food_details')
+                                                        .doc(auth
+                                                            .currentUser.email)
+                                                        .update({
+                                                      'quantity': quantity
+                                                    }).then((value) {
+                                                      _showSuccess(
+                                                          'Quantity is changed');
+                                                      Navigator.of(context)
+                                                          .pop();
+                                                      Navigator.of(context)
+                                                          .pushReplacement(
+                                                              MaterialPageRoute(
+                                                                  builder:
+                                                                      (context) =>
+                                                                          FoodDetails()))
+                                                          .catchError(
+                                                              (onError) {
+                                                        print(Error);
+                                                      });
+                                                    }).catchError((Error) {
+                                                      _showError(
+                                                          Error.toString());
+                                                    });
+                                                  })
+                                            ],
+                                          );
+                                        });
+                                  },
+                                ),
+                              ),
+                              Padding(
+                                padding: const EdgeInsets.only(left: 15.0),
+                                child: ElevatedButton(
+                                  child: Text("Delete Post"),
+                                  onPressed: () {
+                                    setState(() {
+                                      FirebaseFirestore.instance
+                                          .collection('Food_details')
+                                          .doc(auth.currentUser.email)
+                                          .delete();
+                                      setState(() {
+                                        _showError('Post deleted');
+                                        postCreated = false;
+                                        notification.cancelAll();
+                                      });
+                                    });
+                                  },
+                                ),
+                              ),
+                            ],
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 15.0),
+                            child: ElevatedButton(
+                              child: Text('Donation Completed Successfully'),
+                              onPressed: () async {
+                                notification.cancelAll();
+                                await FirebaseFirestore.instance
+                                    .collection('user')
+                                    .doc(auth.currentUser.email)
+                                    .collection('donations')
+                                    .doc()
+                                    .set({
+                                  'name': foodName,
+                                  'quantity': quantity,
+                                  'expiry': DateTime.now(),
+                                  'address': address,
+                                }).catchError((e) {
+                                  print(e);
+                                });
+                                foodName = null;
+                                quantity = null;
+                                address = null;
+                                hours = null;
+                                description = ' ';
+                                setState(() {
+                                  FirebaseFirestore.instance
+                                      .collection('Food_details')
+                                      .doc(auth.currentUser.email)
+                                      .delete();
+                                  _showSuccess(
+                                      'Thankyou for being kind hearted');
+                                  postCreated = false;
+                                });
+                              },
+                            ),
+                          )
+                        ],
                       ),
                       Padding(
-                        padding: const EdgeInsets.only(top: 30.0),
+                        padding: const EdgeInsets.only(top: 30.0, bottom: 15),
                         child: Container(
                           color: Colors.white,
                           child: Image(
@@ -309,18 +442,37 @@ class _FoodDetailsState extends State<FoodDetails> {
                         ]),
                       ),
                     ),
-                    TextField(
-                      decoration: InputDecoration(
-                        hintText: 'Food Name',
-                        prefixIcon: Icon(Icons.breakfast_dining),
-                        hintStyle: TextStyle(color: Colors.blue),
-                        border: new OutlineInputBorder(
-                          borderRadius: new BorderRadius.circular(5),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Food Name',
+                          prefixIcon: Icon(Icons.breakfast_dining),
+                          hintStyle: TextStyle(color: Colors.blue),
+                          border: new OutlineInputBorder(
+                            borderRadius: new BorderRadius.circular(5),
+                          ),
                         ),
+                        onChanged: (value) {
+                          foodName = value.trim();
+                        },
                       ),
-                      onChanged: (value) {
-                        foodName = value;
-                      },
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
+                      child: TextField(
+                        decoration: InputDecoration(
+                          hintText: 'Description',
+                          prefixIcon: Icon(Icons.description),
+                          hintStyle: TextStyle(color: Colors.blue),
+                          border: new OutlineInputBorder(
+                            borderRadius: new BorderRadius.circular(5),
+                          ),
+                        ),
+                        onChanged: (value) {
+                          description = value.trim();
+                        },
+                      ),
                     ),
                     Padding(
                       padding: const EdgeInsets.only(top: 10.0, bottom: 10.0),
@@ -334,7 +486,7 @@ class _FoodDetailsState extends State<FoodDetails> {
                           ),
                         ),
                         onChanged: (value) {
-                          quantity = int.parse(value);
+                          quantity = int.parse(value.trim());
                         },
                       ),
                     ),
@@ -350,12 +502,17 @@ class _FoodDetailsState extends State<FoodDetails> {
                           ),
                         ),
                         onChanged: (value) {
-                          address = value;
+                          address = value.trim();
                         },
                       ),
                     ),
                     Padding(
-                      padding: const EdgeInsets.only(bottom: 10.0),
+                      padding: const EdgeInsets.all(8.0),
+                      child: Text(
+                          "Enter after how many hours food will be expired."),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10, bottom: 10.0),
                       child: TextField(
                         decoration: InputDecoration(
                           hintText: 'Food expiry hours',
@@ -366,14 +523,9 @@ class _FoodDetailsState extends State<FoodDetails> {
                           ),
                         ),
                         onChanged: (value) {
-                          hours = int.parse(value);
+                          hours = int.parse(value.trim());
                         },
                       ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Text(
-                          "Enter after how many hours food will be expired."),
                     ),
                     Padding(
                       padding: const EdgeInsets.only(top: 20.0),
@@ -398,6 +550,7 @@ class _FoodDetailsState extends State<FoodDetails> {
                                   .set({
                                 'email': auth.currentUser.email,
                                 'name': foodName,
+                                'description': description,
                                 'quantity': quantity,
                                 'expiry':
                                     DateTime.now().add(Duration(hours: hours)),
@@ -407,29 +560,21 @@ class _FoodDetailsState extends State<FoodDetails> {
                               }).then((value) {
                                 _showSuccess('Donation Posted');
                                 setState(() {
-                                  postCreated = true;
+                                  Navigator.of(context).pushReplacement(
+                                      MaterialPageRoute(
+                                          builder: (context) => FoodDetails()));
                                 });
+                                scheduleNotification(hours);
+                                // Workmanager().registerOneOffTask(
+                                //     '1', 'Delete_post',
+                                //     inputData: {
+                                //       'email': auth.currentUser.email
+                                //     },
+                                //     initialDelay: Duration(seconds: 10));
                               }).catchError((e) {
                                 print(e);
                                 _showError(e.toString());
                               });
-                              await FirebaseFirestore.instance
-                                  .collection('user')
-                                  .doc(auth.currentUser.email)
-                                  .collection('donations')
-                                  .doc()
-                                  .set({
-                                'name': foodName,
-                                'quantity': quantity,
-                                'expiry': DateTime.now(),
-                                'address': address,
-                              }).catchError((e) {
-                                print(e);
-                              });
-                              foodName = null;
-                              quantity = null;
-                              address = null;
-                              hours = null;
                             } else {
                               _showError('Please fill all fields');
                             }
@@ -487,6 +632,36 @@ class _FoodDetailsState extends State<FoodDetails> {
         ),
       ),
     );
+  }
+
+  void scheduleNotification(int time) async {
+    var notificationTime =
+        DateTime.now().add(Duration(hours: time - 1, minutes: 30));
+
+    var androidPlatformChannelSpecifications = AndroidNotificationDetails(
+      'Post Notification',
+      'Post Notification',
+      'Your post',
+      icon: 'ic_launcher',
+      largeIcon: DrawableResourceAndroidBitmap('ic_launcher'),
+      playSound: true,
+      showWhen: true,
+    );
+
+    var IOSPlatformChannelSpecifications = IOSNotificationDetails(
+        presentSound: true, presentAlert: true, presentBadge: true);
+
+    var platformChannelSpecifics = NotificationDetails(
+        android: androidPlatformChannelSpecifications,
+        iOS: IOSPlatformChannelSpecifications);
+
+    // ignore: deprecated_member_use
+    await notification.schedule(
+        0,
+        'HELP APP',
+        'Your donation time is about to expire. Please delete the post ',
+        notificationTime,
+        platformChannelSpecifics);
   }
 
   List<String> datetime(Timestamp timestamp) {
