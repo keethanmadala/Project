@@ -387,10 +387,10 @@ class _FoodDetailsState extends State<FoodDetails> {
                                     .collection('donations')
                                     .doc()
                                     .set({
-                                  'name': foodName,
-                                  'quantity': quantity,
+                                  'name': doc.get('name'),
+                                  'quantity': doc.get('quantity'),
                                   'expiry': DateTime.now(),
-                                  'address': address,
+                                  'address': doc.get('address'),
                                 }).catchError((e) {
                                   print(e);
                                 });

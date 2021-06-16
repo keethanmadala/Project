@@ -22,7 +22,7 @@ class _ConsumerPageState extends State<ConsumerPage> {
   List<DocumentSnapshot> donations;
   Completer<GoogleMapController> _mapController = Completer();
 
-  var markers;
+  final Set<Marker> _markers = {};
   final geohashService = GeoHashService();
   final geo = Geoflutterfire();
   final applicationBloc = ApplicationBloc();
@@ -92,11 +92,11 @@ class _ConsumerPageState extends State<ConsumerPage> {
 
   void getMarkers(GeoPoint point) {
     setState(() {
-      markers = Marker(
+      _markers.add(Marker(
         markerId: MarkerId('Donation Place'),
         draggable: false,
         position: LatLng(point.latitude, point.longitude),
-      );
+      ));
     });
   }
 
@@ -182,12 +182,12 @@ class _ConsumerPageState extends State<ConsumerPage> {
                                                 TextStyle(color: Colors.black),
                                           ),
                                           Text(
-                                            'Quantity: ${donations[index].get('name')}',
+                                            'Quantity: ${donations[index].get('quantity')}',
                                             style:
                                                 TextStyle(color: Colors.black),
                                           ),
                                           Text(
-                                            'Distance: ${calculateDistance(applicationBloc.currentLocation.latitude, applicationBloc.currentLocation.longitude, donations[index].get('location'))}',
+                                            'Distance: ${calculateDistance(applicationBloc.currentLocation.latitude, applicationBloc.currentLocation.longitude, donations[index].get('location'))} km/s',
                                             style:
                                                 TextStyle(color: Colors.black),
                                           ),
@@ -212,6 +212,8 @@ class _ConsumerPageState extends State<ConsumerPage> {
                                       onTap: () {
                                         _goToNearbyPlace(
                                             donations[index].get('location'));
+                                        getMarkers(
+                                            donations[index].get('location'));
                                       },
                                     ),
                                   ),
@@ -227,21 +229,17 @@ class _ConsumerPageState extends State<ConsumerPage> {
                     child: Container(
                       height: MediaQuery.of(context).size.height / 2.5,
                       child: GoogleMap(
-                        mapType: MapType.normal,
-                        myLocationEnabled: true,
-                        initialCameraPosition: CameraPosition(
-                            target: LatLng(
-                                applicationBloc.currentLocation.latitude,
-                                applicationBloc.currentLocation.longitude),
-                            zoom: 16.0),
-                        onMapCreated: (GoogleMapController controller) {
-                          _mapController.complete(controller);
-                          markers:
-                          (markers != null)
-                              ? Set<Marker>.of(markers)
-                              : Set<Marker>();
-                        },
-                      ),
+                          mapType: MapType.normal,
+                          myLocationEnabled: true,
+                          initialCameraPosition: CameraPosition(
+                              target: LatLng(
+                                  applicationBloc.currentLocation.latitude,
+                                  applicationBloc.currentLocation.longitude),
+                              zoom: 16.0),
+                          markers: _markers,
+                          onMapCreated: (GoogleMapController controller) {
+                            _mapController.complete(controller);
+                          }),
                     ),
                   ),
                 ],

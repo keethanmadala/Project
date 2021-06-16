@@ -28,6 +28,7 @@ class _DonationPageState extends State<DonationPage> {
         .collection('user')
         .doc(auth.currentUser.email)
         .collection('donations')
+        .orderBy('expiry', descending: true)
         .get()
         .then((value) {
       setState(() {
@@ -51,40 +52,61 @@ class _DonationPageState extends State<DonationPage> {
       ),
       endDrawer: NavigationDrawerWidget(),
       body: (donations != null)
-          ? ListView.builder(
-              itemCount: donations.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  shadowColor: Colors.grey,
-                  shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10)),
-                  child: Padding(
+          ? SingleChildScrollView(
+              child: Column(
+                children: [
+                  Padding(
                     padding: const EdgeInsets.all(8.0),
-                    child: ListTile(
-                      leading: Text(
-                        '${index + 1} .',
-                        style: TextStyle(
-                          fontSize: 17,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      minLeadingWidth: 10,
-                      horizontalTitleGap: 20,
-                      title: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Food name: ${donations[index].get('name')}'),
-                          Text(
-                              'Quantity : ${donations[index].get('quantity')}'),
-                          Text(
-                              'Date : ${datetime(donations[index].get('expiry'))[0]} , Time : ${datetime(donations[index].get('expiry'))[1].substring(0, 8)}'),
-                          Text('Address : ${donations[index].get('address')}'),
-                        ],
-                      ),
+                    child: Text(
+                      'Your recent donations :',
+                      style:
+                          TextStyle(fontWeight: FontWeight.bold, fontSize: 20),
                     ),
                   ),
-                );
-              })
+                  Container(
+                    height: MediaQuery.of(context).size.height * 0.85,
+                    width: MediaQuery.of(context).size.width,
+                    child: ListView.builder(
+                        scrollDirection: Axis.vertical,
+                        itemCount: donations.length,
+                        itemBuilder: (context, index) {
+                          return Card(
+                            shadowColor: Colors.grey,
+                            shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10)),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: ListTile(
+                                leading: Text(
+                                  '${index + 1} .',
+                                  style: TextStyle(
+                                    fontSize: 17,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                minLeadingWidth: 10,
+                                horizontalTitleGap: 20,
+                                title: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                        'Food name: ${donations[index].get('name')}'),
+                                    Text(
+                                        'Quantity : ${donations[index].get('quantity')}'),
+                                    Text(
+                                        'Date : ${datetime(donations[index].get('expiry'))[0]} , Time : ${datetime(donations[index].get('expiry'))[1].substring(0, 8)}'),
+                                    Text(
+                                        'Address : ${donations[index].get('address')}'),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        }),
+                  ),
+                ],
+              ),
+            )
           : Container(
               child: Center(
                 child: CircularProgressIndicator(),
