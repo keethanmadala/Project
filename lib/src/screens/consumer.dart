@@ -46,7 +46,7 @@ class _ConsumerPageState extends State<ConsumerPage> {
     var range = geohashService.getGeoHashRange(
         applicationBloc.currentLocation.latitude,
         applicationBloc.currentLocation.longitude,
-        100);
+        25);
     FirebaseFirestore.instance
         .collection("Food_details")
         .where("geohash", isGreaterThanOrEqualTo: range[0])
